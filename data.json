@@ -18,7 +18,7 @@
       "horaVencimento": "08:00",
       "statusExecucao": "Concluído",
       "flag": "Concluido",
-      "ordem": 5,
+      "ordem": 1,
       "_statusNorm": "a fazer"
     },
     {
@@ -29,7 +29,7 @@
       "horaVencimento": "11:00",
       "statusExecucao": "Concluído",
       "flag": "Concluido",
-      "ordem": 1
+      "ordem": 2
     },
     {
       "id": 4,
@@ -39,7 +39,7 @@
       "horaVencimento": "17:00",
       "statusExecucao": "Concluído",
       "flag": "Concluido",
-      "ordem": 1
+      "ordem": 3
     },
     {
       "id": 5,
@@ -49,7 +49,7 @@
       "horaVencimento": "14:00",
       "statusExecucao": "Concluído",
       "flag": "Concluido",
-      "ordem": 2,
+      "ordem": 4,
       "_statusNorm": "a fazer"
     },
     {
@@ -60,7 +60,7 @@
       "horaVencimento": "15:00",
       "statusExecucao": "Concluído",
       "flag": "Concluido",
-      "ordem": 0,
+      "ordem": 5,
       "_statusNorm": "em atraso"
     },
     {
@@ -75,13 +75,14 @@
     },
     {
       "id": 8,
-      "titulo": "Tarefa matemática",
-      "descricao": "Lição Teams",
+      "titulo": "Tarefa matemática 1",
+      "descricao": "Lição Teams matemática",
       "dataVencimento": "2026-01-05",
       "horaVencimento": "21:00",
-      "statusExecucao": "A Fazer",
-      "flag": "Normal",
-      "ordem": 2
+      "statusExecucao": "Concluído",
+      "flag": "Concluido",
+      "ordem": 7,
+      "_statusNorm": "concluido"
     },
     {
       "id": 9,
@@ -101,7 +102,7 @@
       "horaVencimento": "13:13",
       "statusExecucao": "Concluído",
       "flag": "Concluido",
-      "ordem": 4
+      "ordem": 6
     },
     {
       "id": 11,
@@ -119,9 +120,9 @@
       "descricao": "Consumir dados do sistema parceiro",
       "dataVencimento": "2025-11-31",
       "horaVencimento": "17:00",
-      "statusExecucao": "A Fazer",
-      "flag": "Normal",
-      "ordem": 3
+      "statusExecucao": "Em Atraso",
+      "flag": "Atrasado",
+      "ordem": 1
     },
     {
       "id": 13,
@@ -131,7 +132,7 @@
       "horaVencimento": "18:00",
       "statusExecucao": "Concluído",
       "flag": "Concluido",
-      "ordem": 3
+      "ordem": 8
     },
     {
       "id": 14,
@@ -141,7 +142,7 @@
       "horaVencimento": "09:00",
       "statusExecucao": "Concluído",
       "flag": "Concluido",
-      "ordem": 4
+      "ordem": 9
     },
     {
       "id": 15,
@@ -149,9 +150,9 @@
       "descricao": "kljlkj",
       "dataVencimento": "2025-11-30",
       "horaVencimento": "01:01",
-      "statusExecucao": "A Fazer",
-      "flag": "Pendente",
-      "ordem": 0
+      "statusExecucao": "Em Atraso",
+      "flag": "Atrasado",
+      "ordem": 2
     },
     {
       "id": 16,
@@ -159,9 +160,9 @@
       "descricao": "asdçajshd",
       "dataVencimento": "2025-11-29",
       "horaVencimento": "20:20",
-      "statusExecucao": "A Fazer",
-      "flag": "Pendente",
-      "ordem": 0
+      "statusExecucao": "Em Atraso",
+      "flag": "Atrasado",
+      "ordem": 3
     },
     {
       "id": 17,
@@ -171,7 +172,7 @@
       "horaVencimento": "12:56",
       "statusExecucao": "A Fazer",
       "flag": "Normal",
-      "ordem": 0
+      "ordem": 4
     },
     {
       "id": 18,
@@ -180,8 +181,8 @@
       "dataVencimento": "2025-12-05",
       "horaVencimento": "12:12",
       "statusExecucao": "A Fazer",
-      "flag": "Normal",
-      "ordem": 0
+      "flag": "Pendente",
+      "ordem": 5
     },
     {
       "id": 19,
@@ -191,7 +192,7 @@
       "horaVencimento": "17:55",
       "statusExecucao": "A Fazer",
       "flag": "Normal",
-      "ordem": 0
+      "ordem": 6
     },
     {
       "id": 20,
@@ -199,9 +200,9 @@
       "descricao": "ççççççççççççççççç",
       "dataVencimento": "2025-12-01",
       "horaVencimento": "23:23",
-      "statusExecucao": "A Fazer",
-      "flag": "Normal",
-      "ordem": 0
+      "statusExecucao": "Em Atraso",
+      "flag": "Atrasado",
+      "ordem": 7
     },
     {
       "id": 21,
@@ -209,9 +210,9 @@
       "descricao": "dsdkfohcudsibh",
       "dataVencimento": "2025-12-01",
       "horaVencimento": "14:52",
-      "statusExecucao": "A Fazer",
-      "flag": "Pendente",
-      "ordem": 0
+      "statusExecucao": "Em Atraso",
+      "flag": "Atrasado",
+      "ordem": 8
     },
     {
       "titulo": "aaaaaa",
@@ -220,8 +221,18 @@
       "horaVencimento": "01:01",
       "statusExecucao": "A Fazer",
       "flag": "Normal",
-      "ordem": 0,
+      "ordem": 9,
       "id": 22
+    },
+    {
+      "titulo": "tarefa 1",
+      "descricao": "criando tarefa",
+      "dataVencimento": "2026-01-01",
+      "horaVencimento": "12:12",
+      "statusExecucao": "A Fazer",
+      "flag": "Normal",
+      "ordem": 10,
+      "id": 23
     }
   ],
   "eventos": [
@@ -283,6 +294,22 @@
       "dataCriacao": "2025-11-28T19:49:13.693Z",
       "dataPrazo": "2025-12-12",
       "id": 4
+    },
+    {
+      "nome": "projeto gestão",
+      "lider": "joão",
+      "membros": [
+        "ana",
+        "bruno",
+        "maria"
+      ],
+      "etiqueta": "afazer",
+      "descricao": "fazer metodologias",
+      "checklist": [],
+      "comentarios": [],
+      "dataCriacao": "2025-12-02T17:49:06.874Z",
+      "dataPrazo": "2025-12-13",
+      "id": 5
     }
   ],
   "usuarios": [
@@ -342,6 +369,42 @@
           "autor": "bot",
           "texto": "Atalhos: Enter para enviar. /ajuda para comandos.",
           "timestamp": "2025-11-28T19:50:34.345Z"
+        },
+        {
+          "id": 1764697775640,
+          "autor": "Você",
+          "texto": "oi",
+          "timestamp": "2025-12-02T17:49:35.640Z"
+        },
+        {
+          "id": 1764697776458,
+          "autor": "bot",
+          "texto": "Desculpa, não entendi. Tente usar /ajuda para ver comandos.",
+          "timestamp": "2025-12-02T17:49:36.457Z"
+        },
+        {
+          "id": 1764697780872,
+          "autor": "Você",
+          "texto": "/ajuda",
+          "timestamp": "2025-12-02T17:49:40.872Z"
+        },
+        {
+          "id": 1764697781837,
+          "autor": "bot",
+          "texto": "Comandos: /ajuda, /tutorial, /atalhos, /contato",
+          "timestamp": "2025-12-02T17:49:41.836Z"
+        },
+        {
+          "id": 1764697788249,
+          "autor": "Você",
+          "texto": "/atalhos",
+          "timestamp": "2025-12-02T17:49:48.249Z"
+        },
+        {
+          "id": 1764697789259,
+          "autor": "bot",
+          "texto": "Atalhos: Enter para enviar. /ajuda para comandos.",
+          "timestamp": "2025-12-02T17:49:49.258Z"
         }
       ]
     },
@@ -357,6 +420,12 @@
           "autor": "Maria",
           "texto": "Tudo bem?",
           "timestamp": "2025-11-24T10:12:00.000Z"
+        },
+        {
+          "id": 1764697762842,
+          "autor": "Você",
+          "texto": "oii",
+          "timestamp": "2025-12-02T17:49:22.842Z"
         }
       ]
     },
@@ -378,6 +447,12 @@
           "autor": "Você",
           "texto": "oi",
           "timestamp": "2025-11-28T19:50:02.271Z"
+        },
+        {
+          "id": 1764697767012,
+          "autor": "Você",
+          "texto": "ola",
+          "timestamp": "2025-12-02T17:49:27.012Z"
         }
       ]
     },
@@ -399,6 +474,12 @@
           "autor": "Você",
           "texto": "ok",
           "timestamp": "2025-11-28T19:50:10.477Z"
+        },
+        {
+          "id": 1764697772148,
+          "autor": "Você",
+          "texto": "certo",
+          "timestamp": "2025-12-02T17:49:32.148Z"
         }
       ]
     }
