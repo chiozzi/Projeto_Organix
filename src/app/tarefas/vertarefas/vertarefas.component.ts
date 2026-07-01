@@ -7,106 +7,146 @@ import { Flag, StatusExecucao, Tarefa, TarefasService } from '../tarefas.service
   templateUrl: './vertarefas.component.html',
   styleUrl: './vertarefas.component.css'
 })
-export class VertarefasComponent implements OnInit, OnDestroy{
-  @Input() tarefa: Tarefa | null | undefined;
-  @Output() fechar = new EventEmitter<void>();
-  @Output() editar = new EventEmitter<Tarefa>();
-  @Output() concluir = new EventEmitter<Tarefa>();
-  @Output() excluir = new EventEmitter<Tarefa>();
+export class VertarefasComponent implements OnInit, OnDestroy {
 
-  fechando = false;
+  // -------------------------------------------------------
+  // Entrada: tarefa a ser exibida
+  // -------------------------------------------------------
+  @Input() tarefa: Tarefa | null = null;  // -------------------------------------------------------
+  // Saídas: ações possíveis dentro do modal
+  // -------------------------------------------------------
+  @Output() fechar   = new EventEmitter<void>();
+  @Output() editar   = new EventEmitter<Tarefa>();
+  @Output() concluir = new EventEmitter<Tarefa>();
+  @Output() excluir  = new EventEmitter<Tarefa>();
+  @Output() arquivar = new EventEmitter<Tarefa>();
+
+  // Expõe os enums para uso no template
   StatusExecucao = StatusExecucao;
   Flag = Flag;
-  mostrarCheck = false;
+
+  // Controla a animação de fechamento do modal
+  estaFechando = false;
+
+  // Controla a exibição do check grande (animação de conclusão)
+  mostrarAnimacaoConclusao = false;
 
   constructor(private tarefasService: TarefasService) {}
 
-
   ngOnInit(): void {
+    // Trava o scroll da página enquanto o modal estiver aberto
     document.body.style.overflow = 'hidden';
   }
 
   ngOnDestroy(): void {
+    // Restaura o scroll ao fechar
     document.body.style.overflow = '';
   }
 
-  // Fecha o modal com animação
-  fecharModal() {
-    this.fechando = true;
+  // -------------------------------------------------------
+  // FECHAR MODAL
+  // -------------------------------------------------------
+
+  /** Fecha o modal com animação de saída (300ms) */
+  fecharModal(): void {
+    this.estaFechando = true;
     setTimeout(() => {
       this.fechar.emit();
-      this.fechando = false;
+      this.estaFechando = false;
     }, 300);
   }
 
-  // Emite evento de edição
-  editarTarefa() {
+  // -------------------------------------------------------
+  // AÇÕES DO RODAPÉ
+  // -------------------------------------------------------
+
+  /** Emite o evento de edição com a tarefa atual */
+  solicitarEdicao(): void {
     if (!this.tarefa) return;
     this.editar.emit(this.tarefa);
   }
 
-  // Concluir tarefa
+  /**
+   * Conclui a tarefa:
+   * 1. Atualiza no servidor
+   * 2. Exibe animação de check por 1 segundo
+   * 3. Fecha o modal e notifica o componente pai
+   */
+  concluirTarefa(): void {
+    if (!this.tarefa?.id) return;
 
+    this.mostrarAnimacaoConclusao = true;
 
-concluirTarefa() {
-  if (!this.tarefa || !this.tarefa.id) return;
+    const tarefaConcluida: Tarefa = {
+      ...this.tarefa,
+      statusExecucao: StatusExecucao.Concluido,
+      flag: Flag.Concluido
+    };
 
-  // Mostra o check gigante e esconde o modal
-  this.mostrarCheck = true;
+    this.tarefasService.atualizar(this.tarefa.id, tarefaConcluida).subscribe({
+      next: () => {
+        setTimeout(() => {
+          this.concluir.emit(tarefaConcluida);
+          this.fecharModal();
+          this.mostrarAnimacaoConclusao = false;
+        }, 1000);
+      },
+      error: (erro) => console.error('Erro ao concluir tarefa:', erro)
+    });
+  }
 
-  const tarefaAtualizada: Tarefa = {
-    ...this.tarefa,
-    statusExecucao: StatusExecucao.Concluido,
-    flag: Flag.Concluido
-  };
+  /**
+   * Move a tarefa para a lixeira (excluido = true) com confirmação.
+   * O pai decide o que fazer com o evento emitido.
+   */
+  moverParaLixeira(): void {
+    if (!this.tarefa?.id) return;
 
-  this.tarefasService.atualizar(this.tarefa.id, tarefaAtualizada).subscribe({
-    next: () => {
-      // Depois de 1s, fecha modal e emite tarefa concluída
-      setTimeout(() => {
-        this.concluir.emit(tarefaAtualizada);
+    const confirmado = confirm('Tem certeza que deseja excluir esta tarefa?');
+    if (!confirmado) return;
+
+    const copia: Tarefa = { ...this.tarefa };
+
+    this.tarefasService.atualizar(this.tarefa.id, { ...copia, excluido: true }).subscribe({
+      next: () => {
+        this.excluir.emit(copia);
         this.fecharModal();
-        this.mostrarCheck = false;
-      }, 1000);
-    },
-    error: (err) => console.error('Erro ao concluir tarefa:', err)
-  });
-}
+      },
+      error: (erro) => console.error('Erro ao excluir tarefa:', erro)
+    });
+  }
 
+  arquivarTarefa(): void {
+  if (!this.tarefa?.id) return;
 
-// Excluir tarefa
-excluirTarefa() {
-  if (!this.tarefa || !this.tarefa.id) return;
+  const confirmado = confirm('Tem certeza que deseja arquivar esta tarefa?');
+  if (!confirmado) return;
 
-  const confirmDelete = confirm('Tem certeza que deseja excluir esta tarefa?');
-  if (!confirmDelete) return;
-
-  const tarefaTemporaria: Tarefa = { ...this.tarefa };
-
-  this.tarefasService.remover(this.tarefa.id).subscribe({
+  this.tarefasService.atualizar(this.tarefa.id, { ...this.tarefa, arquivado: true }).subscribe({
     next: () => {
-      this.excluir.emit(tarefaTemporaria); // ✅ passa a tarefa excluída
+      this.arquivar.emit(this.tarefa!);
       this.fecharModal();
     },
-    error: (err) => console.error('Erro ao excluir tarefa:', err)
+    error: (erro) => console.error('Erro ao arquivar tarefa:', erro)
   });
 }
 
+  // -------------------------------------------------------
+  // HELPERS DE ESTILO
+  // -------------------------------------------------------
 
-
-  // Retorna classe CSS de acordo com a flag
-  tarefaStatusClass(flag?: Flag): string {
-    switch (flag) {
-      case Flag.Atrasado: return 'status atraso';
-      case Flag.Urgente: return 'status urgente';
-      case Flag.Pendente: return 'status pendente';
-      case Flag.Concluido: return 'status concluido';
-      case Flag.Normal: return 'status normal';
-      default: return '';
-    }
+  /**
+   * Retorna a classe CSS correspondente à flag da tarefa,
+   * usada para colorir o badge de status no modal.
+   */
+  obterClasseFlag(flag?: Flag): string {
+    const mapa: Record<Flag, string> = {
+      [Flag.Atrasado]: 'status atraso',
+      [Flag.Urgente]:  'status urgente',
+      [Flag.Pendente]: 'status pendente',
+      [Flag.Concluido]:'status concluido',
+      [Flag.Normal]:   'status normal'
+    };
+    return flag ? (mapa[flag] ?? '') : '';
   }
 }
-
-
-
-

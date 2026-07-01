@@ -5,8 +5,8 @@
       <img src="https://hips.hearstapps.com/hmg-prod/images/cristiano-ronaldo-of-portugal-during-the-uefa-nations-news-photo-1748359673.pjpeg?crop=0.610xw:0.917xh;0.317xw,0.0829xh&resize=640:*" alt="Foto de Perfil">
     </div>
     <div class="perfil-info">
-      <h2>Olá, Cristiano Ronaldo!</h2>
-      <p class="status-online">&#64;CR7_goat • <span class="online">Online</span></p>
+      <h2>Olá, {{ usuario?.nome }}!</h2>
+      <p class="status-online">{{ usuario?.email }} • <span class="online">{{ usuario?.status }}</span></p>
     </div>
     <!-- Botão Sair -->
     <button class="btn-sair">
@@ -22,7 +22,7 @@
       <h3>Dados Pessoais</h3>
       <div class="perfil-item">
         <label>Nome Completo</label>
-        <input type="text" value="Cristiano Ronaldo" disabled />
+        <input type="text" [value]="usuario?.nome || ''" disabled />
       </div>
       <div class="perfil-item">
         <label>User</label>
@@ -30,7 +30,7 @@
       </div>
       <div class="perfil-item">
         <label>E-mail</label>
-        <input type="text" value="cr7goat@gmail.com" disabled />
+        <input type="text" [value]="usuario?.email || ''" disabled />
       </div>
       <div class="perfil-item">
         <label>Telefone Pessoal</label>

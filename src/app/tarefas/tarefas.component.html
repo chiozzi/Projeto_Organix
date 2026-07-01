@@ -1,23 +1,32 @@
+<!-- ============================================================
+     PAINEL KANBAN DE TAREFAS
+     Colunas: A Fazer | Em Andamento | Concluídas (expansível)
+     Drag & drop entre colunas via Angular CDK
+============================================================ -->
 <div class="container">
   <h2>Painel de Tarefas</h2>
 
-  <!-- Linha com A Fazer e Em Andamento -->
+  <!-- Linha superior: A Fazer + Em Andamento -->
   <div class="kanban row justify-content-center">
 
-    <!-- A Fazer -->
-    <div id="afazer" class="col-md-4 kanban-col"
+    <!-- COLUNA: A FAZER (inclui tarefas atrasadas) -->
+    <div id="afazer"
+         class="col-md-4 kanban-col"
          cdkDropList
          [cdkDropListData]="tarefasAFazer"
-         [cdkDropListConnectedTo]="['emandamento','concluidas']"
-         (cdkDropListDropped)="drop($event)">
+         [cdkDropListConnectedTo]="['emandamento', 'concluidas']"
+         (cdkDropListDropped)="aoSoltarCard($event)">
+
       <h4>📝 A Fazer</h4>
+
       <div class="kanban-cards">
         <div class="card mb-2"
              *ngFor="let tarefa of tarefasAFazer"
-             [ngClass]="{'removendo': tarefa.removendo}"
+             [ngClass]="{ 'removendo': tarefa.removendo }"
              cdkDrag
              [cdkDragData]="tarefa"
-             (click)="abrirModal(tarefa)">
+             (click)="abrirModalVisualizacao(tarefa)">
+
           <div class="card-header">
             <h5>{{ tarefa.titulo }}</h5>
             <span class="status-badge {{ tarefa.flag | lowercase }}">{{ tarefa.flag }}</span>
@@ -29,20 +38,24 @@
       </div>
     </div>
 
-    <!-- Em Andamento -->
-    <div id="emandamento" class="col-md-4 kanban-col"
+    <!-- COLUNA: EM ANDAMENTO -->
+    <div id="emandamento"
+         class="col-md-4 kanban-col"
          cdkDropList
          [cdkDropListData]="tarefasEmAndamento"
-         [cdkDropListConnectedTo]="['afazer','concluidas']"
-         (cdkDropListDropped)="drop($event)">
+         [cdkDropListConnectedTo]="['afazer', 'concluidas']"
+         (cdkDropListDropped)="aoSoltarCard($event)">
+
       <h4>⚙️ Em Andamento</h4>
+
       <div class="kanban-cards">
         <div class="card mb-2"
              *ngFor="let tarefa of tarefasEmAndamento"
-             [ngClass]="{'removendo': tarefa.removendo}"
+             [ngClass]="{ 'removendo': tarefa.removendo }"
              cdkDrag
              [cdkDragData]="tarefa"
-             (click)="abrirModal(tarefa)">
+             (click)="abrirModalVisualizacao(tarefa)">
+
           <div class="card-header">
             <h5>{{ tarefa.titulo }}</h5>
             <span class="status-badge {{ tarefa.flag | lowercase }}">{{ tarefa.flag }}</span>
@@ -54,35 +67,39 @@
       </div>
     </div>
 
-  </div> <!-- fecha linha principal -->
+  </div><!-- /linha superior -->
 
-  <!-- Painel Concluídas (abaixo, centralizado e largo) -->
-  <div id="concluidas" class="kanban-col concluido-col"
+  <!-- PAINEL INFERIOR: CONCLUÍDAS (expansível, layout em grid) -->
+  <div id="concluidas"
+       class="kanban-col concluido-col"
        [ngClass]="{ 'compactado': !mostrarConcluidas }"
        cdkDropList
        [cdkDropListData]="tarefasConcluidas"
-       [cdkDropListConnectedTo]="['afazer','emandamento']"
-       (cdkDropListDropped)="drop($event)">
+       [cdkDropListConnectedTo]="['afazer', 'emandamento']"
+       (cdkDropListDropped)="aoSoltarCard($event)">
 
+    <!-- Cabeçalho com botão de mostrar/ocultar -->
     <div class="kanban-header">
       <h4>✅ Concluídas</h4>
-      <button class="toggle-btn" (click)="alternarConcluidas()" title="Mostrar/Ocultar tarefas">
+      <button class="toggle-btn"
+              (click)="alternarVisibilidadeConcluidas()"
+              title="Mostrar/Ocultar tarefas concluídas">
         <i class="fas" [ngClass]="mostrarConcluidas ? 'fa-eye-slash' : 'fa-eye'"></i>
       </button>
     </div>
 
+    <!-- Grid de cards concluídos -->
     <div class="kanban-cards concluidas-cards" [class.oculto]="!mostrarConcluidas">
       <div class="card mb-2"
            *ngFor="let tarefa of tarefasConcluidas"
-           [ngClass]="{'removendo': tarefa.removendo}"
+           [ngClass]="{ 'removendo': tarefa.removendo }"
            cdkDrag
            [cdkDragData]="tarefa"
-           (click)="abrirModal(tarefa)">
+           (click)="abrirModalVisualizacao(tarefa)">
+
         <div class="card-header">
           <h5>{{ tarefa.titulo }}</h5>
-          <span class="status-badge {{ tarefa.flag | lowercase }}">
-            {{ tarefa.flag }}
-          </span>
+          <span class="status-badge {{ tarefa.flag | lowercase }}">{{ tarefa.flag }}</span>
         </div>
         <p><strong>Vencimento:</strong> {{ tarefa.dataVencimento | date:'dd/MM/yyyy' }} às {{ tarefa.horaVencimento }}</p>
         <p><strong>Descrição:</strong> {{ tarefa.descricao }}</p>
@@ -91,26 +108,28 @@
     </div>
   </div>
 
-  <!-- Botão Flutuante -->
-  <button class="btn-flutuante btn btn-primary" (click)="abrirCriarModal()">
+  <!-- Botão flutuante: nova tarefa -->
+  <button class="btn-flutuante btn btn-primary" (click)="abrirModalCriarOuEditar()">
     <i class="fas fa-plus"></i>
   </button>
 
-  <!-- Modais -->
+  <!-- Modal de visualização da tarefa -->
   <app-vertarefas
-    *ngIf="tarefaSelecionada"
-    [tarefa]="tarefaSelecionada"
-    (fechar)="fecharModal()"
-    (editar)="abrirCriarModal($event)"
-    (excluir)="removerTarefa($event)"
-    (concluir)="tarefaConcluida($event)">
+    *ngIf="tarefaAbertaNoModal"
+    [tarefa]="tarefaAbertaNoModal"
+    (fechar)="fecharModalVisualizacao()"
+    (editar)="abrirModalCriarOuEditar($event)"
+    (excluir)="moverParaLixeira($event)"
+    (concluir)="marcarComoConcluida($event)"
+    (arquivar)="aoArquivarTarefa($event)">
   </app-vertarefas>
 
+  <!-- Modal de criar / editar tarefa -->
   <app-criartarefas
-    *ngIf="exibirCriarTarefa"
-    [tarefa]="tarefaParaEdicao"
-    (salvar)="tarefaCriadaOuAtualizada($event)"
-    (fechar)="exibirCriarTarefa=false">
+    *ngIf="exibirModalCriar"
+    [tarefa]="tarefaParaEditar"
+    (salvar)="aoSalvarTarefa($event)"
+    (fechar)="exibirModalCriar = false">
   </app-criartarefas>
+
 </div>
-  

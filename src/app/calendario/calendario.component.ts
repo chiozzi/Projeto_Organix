@@ -1,6 +1,7 @@
 import { Component, OnInit } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
- 
+import { environment } from '../../environments/environment';
+
 interface Evento {
   id: number;
   data: string;
@@ -44,8 +45,8 @@ export class CalendarioComponent implements OnInit {
   // Variável para armazenar o evento que está sendo editado
   eventoEditando: Evento | null = null;
  
-  private apiUrl = 'http://localhost:3000/eventos';
- 
+  private apiUrl = `${environment.apiUrl}/eventos`; 
+  
   constructor(private http: HttpClient) {}
  
   ngOnInit(): void {

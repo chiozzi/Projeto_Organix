@@ -1,32 +1,46 @@
-<div class="modal-overlay" [ngClass]="{'fechando': fechando}" (click)="fecharModal()">
+<!-- ============================================================
+     MODAL: VISUALIZAR TAREFA
+     Exibe os detalhes da tarefa com opções de:
+     excluir, arquivar, editar, concluir
+============================================================ -->
+<div class="modal-overlay"
+     [ngClass]="{ 'fechando': estaFechando }"
+     (click)="fecharModal()">
 
-  <!-- Modal normal -->
-  <div class="modal-content" [ngClass]="{'fechando': fechando, 'invisivel': mostrarCheck}" (click)="$event.stopPropagation()">
+  <!-- Conteúdo do modal (impede propagação do clique no overlay) -->
+  <div class="modal-content"
+       [ngClass]="{ 'fechando': estaFechando, 'invisivel': mostrarAnimacaoConclusao }"
+       (click)="$event.stopPropagation()">
 
-    <!-- Botão fechar topo -->
+    <!-- Botão de fechar (canto superior direito) -->
     <button class="btn-fechar-topo" (click)="fecharModal()">&times;</button>
 
-    <!-- Cabeçalho -->
+    <!-- Cabeçalho: título da tarefa -->
     <div class="modal-header">
       <h2>{{ tarefa?.titulo }}</h2>
     </div>
 
     <hr class="linha1" />
 
-    <!-- Corpo -->
+    <!-- Corpo: informações e descrição -->
     <div class="modal-body">
+
       <section class="info-bloco">
         <h4>📅 Informações</h4>
-        <p><strong>Vencimento:</strong> {{ tarefa?.dataVencimento | date:'dd/MM/yyyy' }}</p>
-        <p><strong>Status:</strong>
-          <span class="status" [ngClass]="tarefaStatusClass(tarefa?.flag)">
+        <p><strong>Vencimento:</strong> {{ tarefa?.dataVencimento | date:'dd/MM/yyyy' }}
+</p>
+
+        <p>
+          <strong>Status:</strong>
+          <span class="status" [ngClass]="obterClasseFlag(tarefa?.flag!)">
             {{ tarefa?.statusExecucao }}
           </span>
         </p>
+
         <p *ngIf="tarefa?.flag">
           <strong>Flag:</strong>
-          <span class="status" [ngClass]="tarefaStatusClass(tarefa?.flag)">
-            {{ tarefa?.flag }}
+          <span class="status" [ngClass]="obterClasseFlag(tarefa!.flag!)">
+            {{ tarefa!.flag }}
           </span>
         </p>
       </section>
@@ -35,37 +49,42 @@
         <h4>📝 Descrição</h4>
         <p>{{ tarefa?.descricao || 'Sem descrição' }}</p>
       </section>
+
     </div>
 
     <hr class="linha2" />
 
-    <!-- Rodapé: botões distribuídos -->
+    <!-- Rodapé: ações -->
     <div class="modal-footer">
+
+      <!-- Lado esquerdo: ações destrutivas -->
       <div class="botoes-esquerda">
-        <button class="btn-excluir" (click)="excluirTarefa()">
+        <button class="btn-excluir" (click)="moverParaLixeira()">
           Excluir <i class="fas fa-trash"></i>
         </button>
-        <button class="btn-arquivar">
+        <button class="btn-arquivar" (click)="arquivarTarefa()">
           Arquivar <i class="fas fa-archive"></i>
         </button>
       </div>
 
+      <!-- Lado direito: ações construtivas -->
       <div class="botoes-direita">
-        <button class="btn-editar" (click)="editarTarefa()">
+        <button class="btn-editar" (click)="solicitarEdicao()">
           Editar <i class="fas fa-edit"></i>
         </button>
-        <button class="btn-concluir" 
-                *ngIf="tarefa?.statusExecucao !== StatusExecucao.Concluido" 
+        <!-- Botão "Concluir" só aparece se a tarefa ainda não foi concluída -->
+        <button class="btn-concluir"
+                *ngIf="tarefa?.statusExecucao !== StatusExecucao.Concluido"
                 (click)="concluirTarefa()">
           Concluir <i class="fas fa-check"></i>
         </button>
       </div>
-    </div>
 
+    </div>
   </div>
 
-  <!-- Check gigante -->
-  <div class="check-grande" *ngIf="mostrarCheck">
+  <!-- Animação de check exibida ao concluir a tarefa -->
+  <div class="check-grande" *ngIf="mostrarAnimacaoConclusao">
     <i class="fas fa-check"></i>
   </div>
 

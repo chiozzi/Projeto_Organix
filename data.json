@@ -69,9 +69,11 @@
       "descricao": "Divulgação para diretoria",
       "dataVencimento": "2026-02-07",
       "horaVencimento": "18:30",
-      "statusExecucao": "Em Andamento",
-      "flag": "Normal",
-      "ordem": 1
+      "statusExecucao": "Em Atraso",
+      "flag": "Atrasado",
+      "ordem": 2,
+      "_statusNorm": "em atraso",
+      "arquivado": true
     },
     {
       "id": 8,
@@ -90,9 +92,10 @@
       "descricao": "Ler muito",
       "dataVencimento": "2026-02-12",
       "horaVencimento": "19:00",
-      "statusExecucao": "Em Andamento",
-      "flag": "Normal",
-      "ordem": 3
+      "statusExecucao": "Em Atraso",
+      "flag": "Atrasado",
+      "ordem": 1,
+      "_statusNorm": "em atraso"
     },
     {
       "id": 10,
@@ -110,9 +113,9 @@
       "descricao": "hou hou hou",
       "dataVencimento": "2025-12-25",
       "horaVencimento": "21:32",
-      "statusExecucao": "Em Andamento",
-      "flag": "Normal",
-      "ordem": 6
+      "statusExecucao": "Em Atraso",
+      "flag": "Atrasado",
+      "ordem": 2
     },
     {
       "id": 12,
@@ -122,7 +125,8 @@
       "horaVencimento": "17:00",
       "statusExecucao": "Em Atraso",
       "flag": "Atrasado",
-      "ordem": 1
+      "ordem": 0,
+      "_statusNorm": "em atraso"
     },
     {
       "id": 13,
@@ -152,7 +156,7 @@
       "horaVencimento": "01:01",
       "statusExecucao": "Em Atraso",
       "flag": "Atrasado",
-      "ordem": 2
+      "ordem": 4
     },
     {
       "id": 16,
@@ -162,7 +166,7 @@
       "horaVencimento": "20:20",
       "statusExecucao": "Em Atraso",
       "flag": "Atrasado",
-      "ordem": 3
+      "ordem": 5
     },
     {
       "id": 17,
@@ -170,9 +174,9 @@
       "descricao": "çoppopopopopo",
       "dataVencimento": "2025-12-16",
       "horaVencimento": "12:56",
-      "statusExecucao": "A Fazer",
-      "flag": "Normal",
-      "ordem": 4
+      "statusExecucao": "Em Atraso",
+      "flag": "Atrasado",
+      "ordem": 6
     },
     {
       "id": 18,
@@ -180,9 +184,9 @@
       "descricao": "çfjifcokssd",
       "dataVencimento": "2025-12-05",
       "horaVencimento": "12:12",
-      "statusExecucao": "A Fazer",
-      "flag": "Pendente",
-      "ordem": 5
+      "statusExecucao": "Em Atraso",
+      "flag": "Atrasado",
+      "ordem": 7
     },
     {
       "id": 19,
@@ -190,9 +194,9 @@
       "descricao": "aaaaaaaaaaaaaaaa",
       "dataVencimento": "2025-12-12",
       "horaVencimento": "17:55",
-      "statusExecucao": "A Fazer",
-      "flag": "Normal",
-      "ordem": 6
+      "statusExecucao": "Em Atraso",
+      "flag": "Atrasado",
+      "ordem": 8
     },
     {
       "id": 20,
@@ -202,7 +206,7 @@
       "horaVencimento": "23:23",
       "statusExecucao": "Em Atraso",
       "flag": "Atrasado",
-      "ordem": 7
+      "ordem": 9
     },
     {
       "id": 21,
@@ -212,16 +216,16 @@
       "horaVencimento": "14:52",
       "statusExecucao": "Em Atraso",
       "flag": "Atrasado",
-      "ordem": 8
+      "ordem": 10
     },
     {
       "titulo": "aaaaaa",
       "descricao": "asda",
       "dataVencimento": "2026-01-01",
       "horaVencimento": "01:01",
-      "statusExecucao": "A Fazer",
-      "flag": "Normal",
-      "ordem": 9,
+      "statusExecucao": "Em Atraso",
+      "flag": "Atrasado",
+      "ordem": 11,
       "id": 22
     },
     {
@@ -229,9 +233,9 @@
       "descricao": "criando tarefa",
       "dataVencimento": "2026-01-01",
       "horaVencimento": "12:12",
-      "statusExecucao": "A Fazer",
-      "flag": "Normal",
-      "ordem": 10,
+      "statusExecucao": "Em Atraso",
+      "flag": "Atrasado",
+      "ordem": 12,
       "id": 23
     }
   ],

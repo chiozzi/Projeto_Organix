@@ -1,6 +1,6 @@
 import { Component, EventEmitter, Input, OnDestroy, OnInit, Output } from '@angular/core';
-import { Tarefa, TarefasService, StatusExecucao, Flag } from '../tarefas.service';
 import { FormControl, FormGroup, Validators } from '@angular/forms';
+import { Flag, StatusExecucao, Tarefa, TarefasService } from '../tarefas.service';
 
 @Component({
   selector: 'app-criartarefas',
@@ -8,87 +8,106 @@ import { FormControl, FormGroup, Validators } from '@angular/forms';
   templateUrl: './criartarefas.component.html',
   styleUrl: './criartarefas.component.css'
 })
-
 export class CriartarefasComponent implements OnInit, OnDestroy {
+
+  // -------------------------------------------------------
+  // Entrada: se fornecida, o modal abre em modo de edição
+  // -------------------------------------------------------
   @Input() tarefa: Tarefa | null = null;
+
+  // -------------------------------------------------------
+  // Saídas: tarefa salva ou modal cancelado
+  // -------------------------------------------------------
   @Output() salvar = new EventEmitter<Tarefa>();
   @Output() fechar = new EventEmitter<void>();
 
-  formTarefa!: FormGroup;
-  fechando = false;
-  hoje: string = '';
+  formulario!: FormGroup;
+
+  // Controla a animação de fechamento
+  estaFechando = false;
+
+  // Data de hoje em formato YYYY-MM-DD (usada como valor mínimo no input de data)
+  dataMinima: string = '';
 
   constructor(private tarefasService: TarefasService) {}
 
   ngOnInit(): void {
     document.body.style.overflow = 'hidden';
+    this.definirDataMinima();
     this.inicializarFormulario();
-    const hojeDate = new Date();
-    this.hoje = hojeDate.toISOString().split('T')[0];
   }
 
   ngOnDestroy(): void {
     document.body.style.overflow = '';
   }
 
+  // -------------------------------------------------------
+  // INICIALIZAÇÃO
+  // -------------------------------------------------------
 
-  inicializarFormulario(): void {
-    this.formTarefa = new FormGroup({
-      titulo: new FormControl(this.tarefa?.titulo || '', Validators.required),
-      descricao: new FormControl(this.tarefa?.descricao || ''),
-      dataVencimento: new FormControl(this.tarefa?.dataVencimento || '', Validators.required),
-      horaVencimento: new FormControl(this.tarefa?.horaVencimento || '', Validators.required),
+  /** Define a data mínima como hoje (impede criar tarefa no passado) */
+  private definirDataMinima(): void {
+    this.dataMinima = new Date().toISOString().split('T')[0];
+  }
+
+  /**
+   * Monta o formulário reativo.
+   * Se uma tarefa foi passada como @Input, pré-preenche os campos.
+   */
+  private inicializarFormulario(): void {
+    this.formulario = new FormGroup({
+      titulo: new FormControl(
+        this.tarefa?.titulo ?? '',
+        Validators.required
+      ),
+      descricao: new FormControl(
+        this.tarefa?.descricao ?? ''
+      ),
+      dataVencimento: new FormControl(
+        this.tarefa?.dataVencimento ?? '',
+        Validators.required
+      ),
+      horaVencimento: new FormControl(
+        this.tarefa?.horaVencimento ?? '',
+        Validators.required
+      ),
       statusExecucao: new FormControl(
         this.tarefa?.statusExecucao ?? StatusExecucao.AFazer,
         Validators.required
       )
-
     });
-
   }
 
-  abrirModalComTarefa(tarefa: Tarefa | null): void {
-    if (this.formTarefa) {
-      this.formTarefa.reset({
-        titulo: tarefa?.titulo || '',
-        descricao: tarefa?.descricao || '',
-        dataVencimento: tarefa?.dataVencimento || '',
-        statusExecucao: tarefa?.statusExecucao || StatusExecucao.AFazer,
-        flag: tarefa?.flag || Flag.Normal
-      });
-    }
-  }
+  // -------------------------------------------------------
+  // SALVAR
+  // -------------------------------------------------------
 
+  /**
+   * Valida o formulário e salva (criar ou atualizar).
+   * Bloqueia se a data selecionada for anterior a hoje.
+   */
   salvarTarefa(): void {
-    if (this.formTarefa.invalid) return;
+    if (this.formulario.invalid) return;
 
-    const formValue = this.formTarefa.value;
-    const hojeDate = new Date(this.hoje);
-    const dataSelecionada = new Date(formValue.dataVencimento);
+    const valores = this.formulario.value;
 
-    if (dataSelecionada < hojeDate) {
+    if (!this.tarefa && valores.dataVencimento < this.dataMinima) {
       alert('Não é permitido criar tarefa em datas anteriores a hoje.');
       return;
     }
 
     const tarefaParaSalvar: Tarefa = {
-      ...this.tarefa,
-      titulo: formValue.titulo,
-      descricao: formValue.descricao,
-      dataVencimento: formValue.dataVencimento,
-      horaVencimento: formValue.horaVencimento,
-      statusExecucao: formValue.statusExecucao || StatusExecucao.AFazer,
-      flag: this.tarefa ? this.tarefa.flag : Flag.Normal,
-      ordem: this.tarefa?.ordem ?? 0
+      ...this.tarefa,                          // mantém campos não editáveis (id, ordem, etc.)
+      titulo:          valores.titulo,
+      descricao:       valores.descricao,
+      dataVencimento:  valores.dataVencimento,
+      horaVencimento:  valores.horaVencimento,
+      statusExecucao:  valores.statusExecucao ?? StatusExecucao.AFazer,
+      flag:            this.tarefa?.flag ?? Flag.Normal,
+      ordem:           this.tarefa?.ordem ?? 0
     };
 
-    // Se for nova tarefa, garantir status e flag corretos
-    if (!this.tarefa) {
-      tarefaParaSalvar.statusExecucao = tarefaParaSalvar.statusExecucao || StatusExecucao.AFazer;
-      tarefaParaSalvar.flag = Flag.Normal;
-    }
-
-
+    // Determina se é criação ou edição
     const operacao$ = this.tarefa?.id
       ? this.tarefasService.atualizar(this.tarefa.id, tarefaParaSalvar)
       : this.tarefasService.criar(tarefaParaSalvar);
@@ -98,19 +117,24 @@ export class CriartarefasComponent implements OnInit, OnDestroy {
         this.salvar.emit(tarefaSalva);
         this.fecharModal();
       },
-      error: (err) => console.error('Erro ao salvar tarefa:', err)
+      error: (erro) => console.error('Erro ao salvar tarefa:', erro)
     });
   }
 
-  cancelar(): void { this.fecharModal(); }
+  // -------------------------------------------------------
+  // FECHAR / CANCELAR
+  // -------------------------------------------------------
 
-  fecharModal() {
-  this.fechando = true;
-  setTimeout(() => {
-    this.fechar.emit();
-    this.fechando = false;
-  }, 300);
+  cancelar(): void {
+    this.fecharModal();
+  }
+
+  /** Fecha o modal com animação de saída (300ms) */
+  fecharModal(): void {
+    this.estaFechando = true;
+    setTimeout(() => {
+      this.fechar.emit();
+      this.estaFechando = false;
+    }, 300);
+  }
 }
-}
-
-

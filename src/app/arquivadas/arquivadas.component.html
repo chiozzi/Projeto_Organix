@@ -1,1 +1,15 @@
-<p>arquivadas works!</p>
+<div class="container mt-4">
+  <h2>📦 Tarefas Arquivadas</h2>
+
+  <p *ngIf="tarefas.length === 0">Nenhuma tarefa arquivada.</p>
+
+  <div class="card mb-2" *ngFor="let tarefa of tarefas">
+    <div class="card-header">
+      <h5>{{ tarefa.titulo }}</h5>
+      <span>{{ tarefa.flag }}</span>
+    </div>
+    <p><strong>Vencimento:</strong> {{ tarefa.dataVencimento | date:'dd/MM/yyyy' }} às {{ tarefa.horaVencimento }}</p>
+    <p>{{ tarefa.descricao || 'Sem descrição' }}</p>
+    <button (click)="desarquivar(tarefa)">Desarquivar</button>
+  </div>
+</div>

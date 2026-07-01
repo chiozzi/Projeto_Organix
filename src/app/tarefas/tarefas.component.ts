@@ -1,10 +1,7 @@
-import { Component, OnInit, ViewChild } from '@angular/core';
-import { Flag, Tarefa, TarefasService, StatusExecucao } from './tarefas.service';
-import { CdkDragDrop, moveItemInArray, transferArrayItem } from '@angular/cdk/drag-drop';
-import { CriartarefasComponent } from './criartarefas/criartarefas.component';
+import { Component, OnInit } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
-
-
+import { CdkDragDrop, moveItemInArray, transferArrayItem } from '@angular/cdk/drag-drop';
+import { Flag, StatusExecucao, Tarefa, TarefasService } from './tarefas.service';
 
 @Component({
   selector: 'app-tarefas',
@@ -14,23 +11,35 @@ import { ActivatedRoute } from '@angular/router';
 })
 export class TarefasComponent implements OnInit {
 
-  tarefasAFazer: Tarefa[] = [];
+  // -------------------------------------------------------
+  // Listas do kanban (uma por coluna)
+  // -------------------------------------------------------
+  tarefasAFazer:      Tarefa[] = [];
   tarefasEmAndamento: Tarefa[] = [];
-  tarefasConcluidas: Tarefa[] = [];
-  mostrarConcluidas: boolean = true;
+  tarefasConcluidas:  Tarefa[] = [];
 
-  tarefaSelecionada: Tarefa | null = null;
-  exibirCriarTarefa: boolean = false;
-  tarefaParaEdicao: Tarefa | null = null;
+  // Controla se a seção "Concluídas" está expandida ou recolhida
+  mostrarConcluidas = true;
 
+  // -------------------------------------------------------
+  // Controle dos modais
+  // -------------------------------------------------------
+  tarefaAbertaNoModal:  Tarefa | null = null;  // modal de visualização
+  exibirModalCriar:     boolean = false;        // modal de criar/editar
+  tarefaParaEditar:     Tarefa | null = null;   // tarefa pré-carregada no modal de edição
+
+  // Expõe os enums para uso direto no template HTML
   StatusExecucao = StatusExecucao;
   Flag = Flag;
 
-  // 🔹 Mapa correto entre ID das colunas e os enums
-  private mapColunaParaStatus: any = {
-    afazer: StatusExecucao.AFazer,
+  // -------------------------------------------------------
+  // Mapa: ID do elemento HTML → status correspondente
+  // Usado para identificar a coluna de destino no drag & drop
+  // -------------------------------------------------------
+  private readonly colunaParaStatus: Record<string, StatusExecucao> = {
+    afazer:      StatusExecucao.AFazer,
     emandamento: StatusExecucao.EmAndamento,
-    concluidas: StatusExecucao.Concluido
+    concluidas:  StatusExecucao.Concluido
   };
 
   constructor(
@@ -39,183 +48,218 @@ export class TarefasComponent implements OnInit {
   ) {}
 
   ngOnInit(): void {
-    this.carregarTarefas();
-
-    this.route.fragment.subscribe(fragment => {
-      if (fragment) {
-        setTimeout(() => {
-          const el = document.getElementById(fragment);
-          if (el) {
-            el.scrollIntoView({ behavior: 'smooth', block: 'center' });
-            el.classList.add('destacado');
-            setTimeout(() => el.classList.remove('destacado'), 2000);
-          }
-        }, 300);
-      }
-    });
+    this.carregarEDistribuirTarefas();
+    this.ouvirFragmentoDeNavegacao();
   }
 
-  alternarConcluidas(): void {
-    this.mostrarConcluidas = !this.mostrarConcluidas;
-  }
+  // -------------------------------------------------------
+  // CARREGAMENTO E DISTRIBUIÇÃO NAS COLUNAS
+  // -------------------------------------------------------
 
-  carregarTarefas(): void {
+  /**
+   * Busca todas as tarefas da API, atualiza status/flag
+   * automaticamente conforme o prazo, e distribui nas colunas.
+   */
+  carregarEDistribuirTarefas(): void {
     this.tarefasService.listar().subscribe(tarefas => {
       const agora = new Date();
 
-      const normaliza = (s?: any) =>
-        s ? String(s).normalize('NFD').replace(/[\u0300-\u036f]/g, '').trim().toLowerCase() : '';
+      tarefas.forEach(tarefa => this.atualizarStatusPorPrazo(tarefa, agora));
 
-      const fazerKey = normaliza(StatusExecucao.AFazer);
-      const andamentoKey = normaliza(StatusExecucao.EmAndamento);
-      const concluidoKey = normaliza(StatusExecucao.Concluido);
-      const atrasoKey = normaliza(StatusExecucao.EmAtraso);
-
-      tarefas.forEach(t => {
-        const vencimentoString = t.dataVencimento ? 
-          `${t.dataVencimento}T${t.horaVencimento || '23:59'}` : null;
-
-        const vencimento = vencimentoString ? new Date(vencimentoString) : null;
-
-        const statusOriginal = t.statusExecucao;
-        const flagOriginal = t.flag;
-
-
-        if (vencimento && !isNaN(vencimento.getTime())) {
-          if (normaliza(t.statusExecucao) !== normaliza(StatusExecucao.Concluido)) {
-            if (vencimento < agora) {
-              t.statusExecucao = StatusExecucao.EmAtraso;
-            } else if (normaliza(t.statusExecucao) === atrasoKey && vencimento >= agora) {
-              t.statusExecucao = StatusExecucao.AFazer;
-            }
-          }
-        }
-
-
-
-
-        t.flag = this.definirFlagAutomaticamente(t);
-
-        if (t.statusExecucao !== statusOriginal || t.flag !== flagOriginal) {
-          this.tarefasService.atualizar(t.id!, t).subscribe();
-        }
-      });
-
-      const tarefasNorm = tarefas.map(t => ({
+      const tarefasComNorm = tarefas.map(t => ({
         ...t,
-        _statusNorm: normaliza(t.statusExecucao)
+        _statusNorm: this.normalizarTexto(t.statusExecucao)
       }));
 
-      this.tarefasAFazer = tarefasNorm.filter(t =>
-        [fazerKey, atrasoKey].includes(t._statusNorm) || t.flag === Flag.Atrasado
+      const chaveAFazer     = this.normalizarTexto(StatusExecucao.AFazer);
+      const chaveAndamento  = this.normalizarTexto(StatusExecucao.EmAndamento);
+      const chaveConcluido  = this.normalizarTexto(StatusExecucao.Concluido);
+      const chaveAtraso     = this.normalizarTexto(StatusExecucao.EmAtraso);
+
+      // Coluna "A Fazer" inclui tanto pendentes quanto atrasadas
+      this.tarefasAFazer = tarefasComNorm.filter(t =>
+        [chaveAFazer, chaveAtraso].includes(t._statusNorm!) || t.flag === Flag.Atrasado
       );
 
-      this.tarefasEmAndamento = tarefasNorm.filter(
-        t => t._statusNorm === andamentoKey
+      this.tarefasEmAndamento = tarefasComNorm.filter(t =>
+        t._statusNorm === chaveAndamento
       );
 
-      this.tarefasConcluidas = tarefasNorm.filter(
-        t => t._statusNorm === concluidoKey
+      this.tarefasConcluidas = tarefasComNorm.filter(t =>
+        t._statusNorm === chaveConcluido
       );
     });
   }
 
-  abrirModal(tarefa: Tarefa): void {
-    this.tarefaSelecionada = tarefa;
-  }
+  /**
+   * Verifica se o prazo venceu e atualiza status e flag.
+   * Salva na API apenas se houve mudança real.
+   */
+  private atualizarStatusPorPrazo(tarefa: Tarefa, agora: Date): void {
+    const isConcluida = this.normalizarTexto(tarefa.statusExecucao) ===
+      this.normalizarTexto(StatusExecucao.Concluido);
 
-  fecharModal(): void {
-    this.tarefaSelecionada = null;
-  }
+    if (isConcluida) return; // tarefas concluídas não mudam de status
 
-  abrirCriarModal(tarefa?: Tarefa): void {
-    this.tarefaParaEdicao = tarefa || null;
-    this.exibirCriarTarefa = true;
-  }
+    const dataHoraVencimento = tarefa.dataVencimento
+      ? new Date(`${tarefa.dataVencimento}T${tarefa.horaVencimento || '23:59'}`)
+      : null;
 
-  // 🔥 Correção do BUG 1 — tarefa editada era substituída pela versão antiga ao concluir
-  tarefaCriadaOuAtualizada(tarefaAtualizada: Tarefa): void {
-    this.exibirCriarTarefa = false;
+    const statusAnterior = tarefa.statusExecucao;
+    const flagAnterior   = tarefa.flag;
 
-    // garante que a nova tarefa entra em uma lista
-    if (!tarefaAtualizada.statusExecucao) {
-      tarefaAtualizada.statusExecucao = StatusExecucao.AFazer;
+    if (dataHoraVencimento && !isNaN(dataHoraVencimento.getTime())) {
+      const jaAtrasada = this.normalizarTexto(tarefa.statusExecucao) ===
+        this.normalizarTexto(StatusExecucao.EmAtraso);
+
+      if (dataHoraVencimento < agora) {
+        tarefa.statusExecucao = StatusExecucao.EmAtraso;
+      } else if (jaAtrasada) {
+        // prazo foi estendido: volta para "A Fazer"
+        tarefa.statusExecucao = StatusExecucao.AFazer;
+      }
     }
 
-    const listas = [this.tarefasAFazer, this.tarefasEmAndamento, this.tarefasConcluidas];
+    tarefa.flag = this.calcularFlagPorPrazo(tarefa);
 
-    listas.forEach(lista => {
-      const index = lista.findIndex(t => t.id === tarefaAtualizada.id);
-      if (index !== -1) lista[index] = tarefaAtualizada;
+    // Persiste só se algo mudou (evita requisições desnecessárias)
+    const houveMudanca = tarefa.statusExecucao !== statusAnterior ||
+      tarefa.flag !== flagAnterior;
+
+    if (houveMudanca && tarefa.id) {
+      this.tarefasService.atualizar(tarefa.id, tarefa).subscribe();
+    }
+  }
+
+  /**
+   * Calcula a flag (prioridade) com base no tempo restante até o vencimento.
+   * - Concluído: sempre Flag.Concluido
+   * - Venceu:    Atrasado
+   * - < 24h:     Urgente
+   * - 24h-72h:   Pendente
+   * - > 72h:     Normal
+   */
+  private calcularFlagPorPrazo(tarefa: Tarefa): Flag {
+    if (tarefa.statusExecucao === StatusExecucao.Concluido) {
+      return Flag.Concluido;
+    }
+
+    const agora      = new Date();
+    const vencimento = new Date(`${tarefa.dataVencimento}T${tarefa.horaVencimento || '23:59'}`);
+
+    if (vencimento < agora) return Flag.Atrasado;
+
+    const horasRestantes = (vencimento.getTime() - agora.getTime()) / (1000 * 60 * 60);
+
+    if (horasRestantes >= 72) return Flag.Normal;
+    if (horasRestantes >= 24) return Flag.Pendente;
+    return Flag.Urgente;
+  }
+
+  // -------------------------------------------------------
+  // MODAL DE VISUALIZAÇÃO
+  // -------------------------------------------------------
+
+  abrirModalVisualizacao(tarefa: Tarefa): void {
+    this.tarefaAbertaNoModal = tarefa;
+  }
+
+  fecharModalVisualizacao(): void {
+    this.tarefaAbertaNoModal = null;
+  }
+
+  // -------------------------------------------------------
+  // MODAL DE CRIAR / EDITAR
+  // -------------------------------------------------------
+
+  abrirModalCriarOuEditar(tarefa?: Tarefa): void {
+    this.tarefaParaEditar = tarefa ?? null;
+    this.exibirModalCriar = true;
+  }
+
+  /**
+   * Chamado quando o modal de criar/editar emite o evento (salvar).
+   * Atualiza a lista localmente e recarrega do servidor.
+   */
+  aoSalvarTarefa(tarefaSalva: Tarefa): void {
+    this.exibirModalCriar = false;
+
+    if (!tarefaSalva.statusExecucao) {
+      tarefaSalva.statusExecucao = StatusExecucao.AFazer;
+    }
+
+    // Substitui nas listas locais para resposta imediata na tela
+    [this.tarefasAFazer, this.tarefasEmAndamento, this.tarefasConcluidas].forEach(lista => {
+      const posicao = lista.findIndex(t => t.id === tarefaSalva.id);
+      if (posicao !== -1) lista[posicao] = tarefaSalva;
     });
 
-    this.carregarTarefas();
+    this.carregarEDistribuirTarefas();
   }
 
+  // -------------------------------------------------------
+  // AÇÕES NAS TAREFAS
+  // -------------------------------------------------------
 
-  removerTarefa(tarefa: Tarefa): void {
+  /**
+   * Move a tarefa para a lixeira (campo excluido = true).
+   * Usa animação de saída antes de remover da lista.
+   */
+  moverParaLixeira(tarefa: Tarefa): void {
     if (!tarefa.id) return;
 
-    tarefa.removendo = true;
+    tarefa.removendo = true; // dispara animação CSS de saída
+
+    const tarefaExcluida: Tarefa = { ...tarefa, excluido: true };
 
     setTimeout(() => {
-      this.tarefasAFazer = this.tarefasAFazer.filter(t => t.id !== tarefa.id);
-      this.tarefasEmAndamento = this.tarefasEmAndamento.filter(t => t.id !== tarefa.id);
-      this.tarefasConcluidas = this.tarefasConcluidas.filter(t => t.id !== tarefa.id);
-      this.fecharModal();
+      this.removerDasListas(tarefa.id!);
+      this.fecharModalVisualizacao();
     }, 300);
 
-    this.tarefasService.remover(tarefa.id).subscribe();
+    this.tarefasService.atualizar(tarefa.id, tarefaExcluida).subscribe();
   }
 
-  tarefaConcluida(tarefa: Tarefa): void {
+  /**
+   * Marca a tarefa como concluída e move para a coluna correta.
+   */
+  marcarComoConcluida(tarefa: Tarefa): void {
     if (!tarefa.id) return;
 
-    const tarefaAtualizada: Tarefa = {
+    const tarefaConcluida: Tarefa = {
       ...tarefa,
       statusExecucao: StatusExecucao.Concluido,
       flag: Flag.Concluido
     };
 
-    this.tarefasService.atualizar(tarefa.id, tarefaAtualizada).subscribe({
+    this.tarefasService.atualizar(tarefa.id, tarefaConcluida).subscribe({
       next: () => {
-        this.carregarTarefas();
-        this.fecharModal();
+        this.carregarEDistribuirTarefas();
+        this.fecharModalVisualizacao();
       }
     });
   }
 
-  private definirFlagAutomaticamente(tarefa: Tarefa): Flag {
-    const agora = new Date();
-    const vencimento = new Date(`${tarefa.dataVencimento}T${tarefa.horaVencimento || '23:59'}`);
+  // -------------------------------------------------------
+  // DRAG & DROP
+  // -------------------------------------------------------
 
-    if (tarefa.statusExecucao === StatusExecucao.Concluido) {
-      return Flag.Concluido;
-    }
-
-    if (vencimento < agora) {
-      return Flag.Atrasado;
-    }
-
-    const diffHoras = (vencimento.getTime() - agora.getTime()) / (1000 * 60 * 60);
-
-    if (diffHoras >= 72) return Flag.Normal;
-    if (diffHoras >= 24) return Flag.Pendente;
-    if (diffHoras > 0) return Flag.Urgente;
-
-    return Flag.Atrasado;
-  }
-
-  // 🔥 Correção total do BUG 2 — arrastar tarefa gravava status errado
-  drop(event: CdkDragDrop<Tarefa[]>): void {
+  /**
+   * Trata o drop de um card entre colunas:
+   * 1. Move o item visualmente
+   * 2. Detecta a coluna de destino pelo ID do elemento
+   * 3. Atualiza status e flag
+   * 4. Persiste no servidor
+   */
+  aoSoltarCard(event: CdkDragDrop<Tarefa[]>): void {
     const tarefa = event.item.data as Tarefa;
     if (!tarefa?.id) return;
 
-    const colunaId = event.container.id;
-    const novoStatus = this.mapColunaParaStatus[colunaId];
-
+    const idColunaDestino = event.container.id;
+    const novoStatus = this.colunaParaStatus[idColunaDestino];
     if (!novoStatus) return;
 
+    // Move visualmente na tela
     if (event.previousContainer === event.container) {
       moveItemInArray(event.container.data, event.previousIndex, event.currentIndex);
     } else {
@@ -227,17 +271,72 @@ export class TarefasComponent implements OnInit {
       );
     }
 
+    // Persiste o novo status e recalcula a flag
     const tarefaAtualizada: Tarefa = {
       ...tarefa,
       statusExecucao: novoStatus,
-      flag: this.definirFlagAutomaticamente({ ...tarefa, statusExecucao: novoStatus }),
+      flag: this.calcularFlagPorPrazo({ ...tarefa, statusExecucao: novoStatus }),
       ordem: event.currentIndex
     };
 
     this.tarefasService.atualizar(tarefa.id, tarefaAtualizada).subscribe();
 
+    // Atualiza a ordem de todos os cards da coluna de destino
     event.container.data.forEach((t, index) => {
       if (t.id) this.tarefasService.atualizarOrdem(t.id, index).subscribe();
     });
+  }
+
+  // -------------------------------------------------------
+  // COLUNA CONCLUÍDAS
+  // -------------------------------------------------------
+
+  alternarVisibilidadeConcluidas(): void {
+    this.mostrarConcluidas = !this.mostrarConcluidas;
+  }
+
+  // -------------------------------------------------------
+  // HELPERS PRIVADOS
+  // -------------------------------------------------------
+
+  /**
+   * Remove acentos, espaços extras e normaliza para minúsculas.
+   * Usado para comparar strings de status sem sensibilidade a acento.
+   */
+  private normalizarTexto(texto?: any): string {
+    return texto
+      ? String(texto).normalize('NFD').replace(/[\u0300-\u036f]/g, '').trim().toLowerCase()
+      : '';
+  }
+
+  /** Remove uma tarefa de todas as colunas pelo ID */
+  private removerDasListas(id: number): void {
+    this.tarefasAFazer      = this.tarefasAFazer.filter(t => t.id !== id);
+    this.tarefasEmAndamento = this.tarefasEmAndamento.filter(t => t.id !== id);
+    this.tarefasConcluidas  = this.tarefasConcluidas.filter(t => t.id !== id);
+  }
+
+  /**
+   * Escuta o fragmento da URL (ex: /tarefas#emandamento)
+   * e rola + destaca a coluna correspondente.
+   */
+  private ouvirFragmentoDeNavegacao(): void {
+    this.route.fragment.subscribe(fragmento => {
+      if (!fragmento) return;
+
+      setTimeout(() => {
+        const elemento = document.getElementById(fragmento);
+        if (elemento) {
+          elemento.scrollIntoView({ behavior: 'smooth', block: 'center' });
+          elemento.classList.add('destacado');
+          setTimeout(() => elemento.classList.remove('destacado'), 2000);
+        }
+      }, 300);
+    });
+  }
+
+  aoArquivarTarefa(tarefa: Tarefa): void {
+    this.removerDasListas(tarefa.id!);
+    this.fecharModalVisualizacao();
   }
 }
